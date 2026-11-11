@@ -1,0 +1,41 @@
+API INTERFACE — V0.1
+
+ CLIENT
+    |
+    v
+ [Customer gateway / reverse proxy]   OPTIONAL; customer-owned
+    |
+    v
+ Trusted authentication middleware   AUTHENTICATES; no domain rights granted
+    |
+    v
+ +-------------------------------+
+ | API Interface (net/http)      |
+ |-------------------------------|
+ | Immutable route + OpenAPI map |
+ | Request ID / correlation      |
+ | Typed trusted identity        |
+ | Bounded strict JSON           |
+ | Typed errors                  |
+ | Page and key hand-off         |
+ | /health /ready                |
+ +---------------+---------------+
+                 |
+                 v
+       Typed command or query
+                 |
+                 v
+ +-------------------------------+
+ | APPLICATION                   |
+ | Validation + authorisation    |
+ | Idempotency state / page order|
+ | Business state and persistence|
+ +-------------------------------+
+
+Consuming http.Server: TLS, header budgets, finite timeouts, Shutdown.
+No gateway, IAM, CRUD framework, application state or retry engine in API Interface.
+
+Untrusted client headers -------X-----> IdentityID / ClientID
+Validated identity middleware -------> Typed identity context
+Untrusted proxy forwarding ----X-----> Authority (default)
+Explicit trusted proxy CIDRs --------> Informational origin only

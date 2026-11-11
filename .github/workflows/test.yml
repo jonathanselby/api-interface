@@ -1,0 +1,39 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: false
+      - name: Module contract
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+      - name: Format contract
+        shell: bash
+        run: |
+          files=$(gofmt -l .)
+          if [ -n "$files" ]; then echo "$files"; exit 1; fi
+      - name: Vet
+        run: go vet ./...
+      - name: Race and acceptance tests
+        run: go test -race -count=1 ./...
+      - name: Generate example OpenAPI
+        run: go run ./cmd/api-example -openapi > /tmp/api-interface-openapi.json
+      - name: Independent OpenAPI 3.0 validation
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --disable-pip-version-check 'openapi-spec-validator==0.7.2'
+          .venv/bin/python -c 'from openapi_spec_validator import validate; import json; validate(json.load(open("/tmp/api-interface-openapi.json")))'
+      - name: Native build
+        run: go build ./...
+      - name: Linux ARM64 build
+        run: GOOS=linux GOARCH=arm64 go build ./...

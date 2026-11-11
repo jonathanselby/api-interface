@@ -1,0 +1,7 @@
+# Go build and runtime outputs
+/bin/
+*.test
+*.out
+coverage.txt
+/openapi.json
+/.venv/

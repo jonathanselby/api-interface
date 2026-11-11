@@ -1,0 +1,31 @@
+name: release-tag
+
+# Deliberately manual: initial publication must never tag an incomplete repository.
+# Run only after source, CI and pinned code-derived evidence are complete.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tag-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create immutable version tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(tr -d '[:space:]' < VERSION)
+          tag="v${version}"
+          if git show-ref --verify --quiet "refs/tags/${tag}"; then
+            echo "Tag already exists, refusing to move it"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "$tag"
+          git push origin "$tag"
